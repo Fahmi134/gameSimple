@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Politala Social World — Kampus Virtual Politeknik Negeri Tanah Laut</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Fullscreen Isometric Campus Canvas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- LOGIN / COMMUNITY GATE OVERLAY -->
+  <div id="loginOverlay" class="overlay">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="campus-badge">POLITALA VIRTUAL CAMPUS • 2.5D</div>
+        <h1>Politala Social World</h1>
+        <p class="subtitle">
+          Jelajahi peta kampus <strong>Politeknik Negeri Tanah Laut</strong>, temui NPC Furry &amp; mahasiswa,
+          ambil quest, main tebak kata, dan mabar online.
+        </p>
+      </div>
+
+      <form id="loginForm" class="login-form" novalidate>
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="playerName">Nama Panggilan / Username</label>
+            <input
+              id="playerName"
+              type="text"
+              maxlength="18"
+              placeholder="Contoh: Rizky_TI"
+              required
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="playerProdi">Jurusan / Program Studi</label>
+            <select id="playerProdi">
+              <option value="D3 Teknologi Informasi">D3 Teknologi Informasi</option>
+              <option value="D4 TRK Jaringan">D4 Tek. Rekayasa Komputer Jaringan</option>
+              <option value="D3 Akuntansi">D3 Akuntansi</option>
+              <option value="D4 Akuntansi Perpajakan">D4 Akuntansi Perpajakan</option>
+              <option value="D3 Agroindustri">D3 Agroindustri</option>
+              <option value="D4 Teknologi Pakan Ternak">D4 Teknologi Pakan Ternak</option>
+              <option value="D4 Peng. Produk Agroindustri">D4 Pengembangan Produk Agroindustri</option>
+              <option value="D3 Teknologi Otomotif">D3 Teknologi Otomotif</option>
+              <option value="D3 Teknologi Sipil">D3 Teknologi Sipil</option>
+              <option value="D4 TRK Jalan & Jembatan">D4 Tek. Rekayasa Konstruksi Jalan & Jembatan</option>
+              <option value="D4 Pemeliharaan Alat Berat">D4 Tek. Rekayasa Pemeliharaan Alat Berat</option>
+              <option value="Tamu / Alumni">Tamu / Alumni Politala</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Avatar Customization -->
+        <div class="avatar-picker">
+          <div class="picker-row">
+            <span>Warna Jaket / Kostum:</span>
+            <div id="outfitSwatches" class="swatches"></div>
+          </div>
+          <div class="picker-row picker-row-col">
+            <span>Gaya Karakter &amp; Kostum Hewan (Furry):</span>
+            <div id="styleButtons" class="style-pills"></div>
+          </div>
+        </div>
+
+        <!-- Instagram Community Requirement Box -->
+        <div class="ig-gate-box">
+          <div class="ig-gate-top">
+            <div class="ig-icon" aria-hidden="true">IG</div>
+            <div class="ig-info">
+              <strong>Syarat Masuk Komunitas: Follow Instagram</strong>
+              <span>Dukung akun komunitas <code>@tambahkan_ketenangann</code> sebelum masuk area kampus.</span>
+            </div>
+            <a
+              id="igFollowBtn"
+              class="btn-ig"
+              href="https://www.instagram.com/tambahkan_ketenangann/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Buka IG ↗
+            </a>
+          </div>
+
+          <label class="ig-confirm-label">
+            <input type="checkbox" id="igConfirmCheck" />
+            <span>
+              Saya sudah follow / mengunjungi Instagram <strong>@tambahkan_ketenangann</strong>
+              <small>(konfirmasi mandiri — API Instagram tidak mendukung cek follow otomatis)</small>
+            </span>
+          </label>
+          <p id="loginError" class="login-error" role="alert" hidden></p>
+        </div>
+
+        <button type="submit" id="enterCampusBtn" class="btn-primary">
+          Masuk ke Kampus Politala →
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <span>Kontrol: <kbd>WASD</kbd> / Klik Tanah</span>
+        <span>•</span>
+        <span>Bicara NPC: Klik NPC / <kbd>F</kbd></span>
+        <span>•</span>
+        <span>Emote Gerak: <kbd>1</kbd>–<kbd>6</kbd></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- IN-GAME HUD -->
+  <div id="hud" class="hud" hidden>
+    <!-- Top Bar -->
+    <header class="hud-top">
+      <div class="location-pill">
+        <span class="dot-live"></span>
+        <div>
+          <div id="currentZoneName" class="zone-name">Gerbang Utama Politala</div>
+          <div id="currentZoneDesc" class="zone-desc">Jl. A. Yani Km. 06, Pelaihari</div>
+        </div>
+      </div>
+
+      <div class="hud-actions">
+        <div class="coin-pill energy-pill" title="Energi / Kenyang Mahasiswa">
+          <span>⚡</span>
+          <span id="energyBalance">80%</span>
+        </div>
+
+        <div class="coin-pill" title="Poin Sosial & Quest Kampus">
+          <span>🪙</span>
+          <span id="coinBalance">0 Koin</span>
+        </div>
+
+        <div class="online-pill" title="Mahasiswa & NPC aktif di kampus">
+          <span class="online-dot"></span>
+          <span id="onlineCount">1 Online</span>
+        </div>
+
+        <button id="btnCanteenMenu" class="hud-btn" hidden title="Daftar Makanan Kantin">📋 Menu Kantin</button>
+        <button id="btnExitCanteen" class="hud-btn" hidden title="Keluar ke Halaman Kampus">🚪 Keluar Kantin</button>
+        <button id="btnExitBeringin" class="hud-btn" hidden title="Keluar dari Museum Rahasia">🚪 Keluar Museum</button>
+        <button id="btnWordGameQuick" class="hud-btn" title="Main Mini-Game Tebak Kata">🔤 Tebak Kata</button>
+        <button id="btnMap" class="hud-btn" title="Peta & Teleport Cepat (M)">🗺️ Peta</button>
+        <button id="btnTime" class="hud-btn" title="Ubah Waktu (Siang/Senja/Malam)">☀️ Siang</button>
+        <button id="btnSound" class="hud-btn" title="Suara Efek">🔊</button>
+        <button id="btnLogout" class="hud-btn hud-btn-ghost" title="Ganti Profil / Keluar">Keluar</button>
+      </div>
+    </header>
+
+    <!-- Quest Tracker Card -->
+    <div id="questTracker" class="quest-tracker">
+      <div class="quest-head">
+        <span class="quest-tag">📜 QUEST AKTIF</span>
+        <span id="questRewardBadge" class="quest-reward">+0 Koin</span>
+      </div>
+      <strong id="questTitle">Belum ada quest</strong>
+      <p id="questDesc">Dekati NPC mahasiswa atau maskot Furry (🐾) lalu tekan [F] untuk ambil quest random!</p>
+      <div id="questActionRow" class="quest-action-row" hidden>
+        <button id="btnQuestAction" class="btn-small">Buka Tebak Kata</button>
+      </div>
+    </div>
+
+    <!-- Nearby Prompts -->
+    <div class="prompts-stack">
+      <div id="npcPrompt" class="landmark-prompt npc-prompt" hidden>
+        <div class="landmark-badge npc-badge" id="npcPromptBadge">🐾 FURRY</div>
+        <div class="landmark-body">
+          <strong id="npcPromptName">Mochi_Rubah</strong>
+          <p id="npcPromptSub">Klik atau tekan [F] untuk ngobrol &amp; ambil quest random.</p>
+        </div>
+        <button id="btnTalkNpc" class="btn-small">Bicara [F]</button>
+      </div>
+
+      <div id="foodPrompt" class="landmark-prompt food-prompt" hidden>
+        <div class="landmark-badge food-badge" id="foodPromptEmoji">🍲 MAKANAN</div>
+        <div class="landmark-body">
+          <strong id="foodPromptName">Soto Banjar Spesial</strong>
+          <p id="foodPromptSub">Tekan [E] atau klik untuk langsung makan (+30% Energi).</p>
+        </div>
+        <button id="btnEatFood" class="btn-small">Makan [E]</button>
+      </div>
+
+      <div id="secretPrompt" class="landmark-prompt secret-prompt" hidden>
+        <div class="landmark-badge secret-badge" id="secretPromptBadge">🔒 RAHASIA</div>
+        <div class="landmark-body">
+          <strong id="secretPromptTitle">Pohon Beringin Misterius</strong>
+          <p id="secretPromptSub">Tekan [E] untuk memasukkan kata sandi Keluarga Beringin.</p>
+        </div>
+        <button id="btnSecretAction" class="btn-small">Buka [E]</button>
+      </div>
+
+      <div id="landmarkPrompt" class="landmark-prompt" hidden>
+        <div class="landmark-badge" id="landmarkBadge">GEDUNG</div>
+        <div class="landmark-body">
+          <strong id="landmarkTitle">Gedung Teknik Informatika</strong>
+          <p id="landmarkText">Tekan E untuk melihat info fasilitas &amp; berinteraksi.</p>
+        </div>
+        <button id="btnEnterBuilding" class="btn-small" hidden>Masuk [E]</button>
+        <button id="btnInspectLandmark" class="btn-small">Lihat Info [E]</button>
+      </div>
+    </div>
+
+    <!-- Bottom Left: Chat Box -->
+    <aside class="chat-panel">
+      <div class="chat-header">
+        <span>💬 Obrolan Kampus</span>
+        <span id="chatChannelTag" class="chat-tag">Global + Sekitar</span>
+      </div>
+      <div id="chatMessages" class="chat-messages"></div>
+      <form id="chatForm" class="chat-form">
+        <input
+          id="chatInput"
+          type="text"
+          maxlength="140"
+          placeholder="Sapa teman kampus... (Enter)"
+          autocomplete="off"
+        />
+        <button type="submit">Kirim</button>
+      </form>
+    </aside>
+
+    <!-- Bottom Center: Animated Emotes -->
+    <div class="emote-bar" aria-label="Emote Interaksi Gerak">
+      <button class="emote-btn" data-emote="👋" title="Melambai / Sapa (1)">👋<span>Sapa</span></button>
+      <button class="emote-btn" data-emote="💃" title="Joget Kampus (2)">💃<span>Joget</span></button>
+      <button class="emote-btn" data-emote="☕" title="Minum Kopi (3)">☕<span>Ngopi</span></button>
+      <button class="emote-btn" data-emote="💻" title="Mengetik Laptop (4)">💻<span>Ngoding</span></button>
+      <button class="emote-btn" data-emote="📸" title="Pose Foto (5)">📸<span>Pose</span></button>
+      <button class="emote-btn" data-emote="❤️" title="Lompat Senang (6)">❤️<span>Hore</span></button>
+    </div>
+
+    <!-- Bottom Right: Minimap + Zoom -->
+    <div class="minimap-wrap">
+      <canvas id="minimapCanvas" width="176" height="176"></canvas>
+      <div class="zoom-controls">
+        <button id="btnZoomIn" title="Perbesar">+</button>
+        <button id="btnZoomOut" title="Perkecil">−</button>
+      </div>
+    </div>
+
+    <!-- Mobile D-Pad -->
+    <div id="mobileControls" class="mobile-controls" aria-hidden="true">
+      <button data-dir="up">▲</button>
+      <div class="mobile-mid">
+        <button data-dir="left">◀</button>
+        <button data-dir="down">▼</button>
+        <button data-dir="right">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fast-Travel Map Modal -->
+  <div id="mapModal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>🗺️ Peta Kampus Politeknik Negeri Tanah Laut</h2>
+        <button id="btnCloseMap" class="close-btn" aria-label="Tutup">✕</button>
+      </div>
+      <p class="modal-sub">Pilih lokasi di bawah ini untuk langsung berpindah (fast-travel) bersama avatar Anda.</p>
+      <div id="teleportGrid" class="teleport-grid"></div>
+    </div>
+  </div>
+
+  <!-- Building Info Modal -->
+  <div id="infoModal" class="modal" hidden>
+    <div class="modal-card modal-card-sm">
+      <div class="modal-head">
+        <h2 id="infoTitle">Gedung Kampus</h2>
+        <button id="btnCloseInfo" class="close-btn" aria-label="Tutup">✕</button>
+      </div>
+      <p id="infoDesc" class="modal-sub"></p>
+      <div id="infoMeta" class="info-meta"></div>
+      <div class="modal-actions">
+        <button id="btnAskNpc" class="btn-primary btn-sm">💬 Sapa Mahasiswa di Sini</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NPC Interaction & Random Quest Modal -->
+  <div id="npcModal" class="modal" hidden>
+    <div class="modal-card modal-card-sm">
+      <div class="modal-head">
+        <div>
+          <span id="npcModalBadge" class="campus-badge">🦊 FURRY MASCOT</span>
+          <h2 id="npcModalName">Mochi_Rubah</h2>
+        </div>
+        <button id="btnCloseNpc" class="close-btn" aria-label="Tutup">✕</button>
+      </div>
+      <p id="npcModalProdi" class="npc-prodi-label"></p>
+      <div id="npcDialogBubble" class="npc-dialog-box"></div>
+
+      <div class="npc-actions-col">
+        <button id="btnGiveRandomQuest" class="btn-primary btn-sm">🎲 Ambil Quest Random</button>
+        <button id="btnPlayWordFromNpc" class="btn-secondary btn-sm">🔤 Main Quest Tebak Kata (+50 Koin)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tebak Kata Mini-Game Modal -->
+  <div id="wordGameModal" class="modal" hidden>
+    <div class="modal-card modal-card-sm">
+      <div class="modal-head">
+        <h2>🔤 Quest Tebak Kata Kampus</h2>
+        <button id="btnCloseWordGame" class="close-btn" aria-label="Tutup">✕</button>
+      </div>
+      <div class="word-status-row">
+        <span id="wordLives" class="info-chip">❤️ Kesempatan: 5</span>
+        <span class="info-chip">🪙 Hadiah: +50 Koin</span>
+      </div>
+      <div class="word-clue-box">
+        <strong>Petunjuk:</strong>
+        <p id="wordClueText">Memuat petunjuk...</p>
+      </div>
+      <div id="wordTiles" class="word-tiles" aria-live="polite"></div>
+
+      <form id="wordGuessForm" class="word-guess-form">
+        <input
+          id="wordGuessInput"
+          type="text"
+          maxlength="24"
+          placeholder="Ketik 1 huruf atau tebak langsung..."
+          autocomplete="off"
+        />
+        <button type="submit" class="btn-small">Tebak!</button>
+      </form>
+
+      <p id="wordFeedback" class="word-feedback"></p>
+
+      <div class="word-footer-actions">
+        <button id="btnWordHint" type="button" class="hud-btn">💡 Buka 1 Huruf</button>
+        <button id="btnWordNext" type="button" class="btn-primary btn-sm">🔄 Kata Baru</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canteen Food Menu Modal -->
+  <div id="canteenMenuModal" class="modal" hidden>
+    <div class="modal-card modal-card-sm">
+      <div class="modal-head">
+        <h2>🍜 Menu Makanan Kantin Politala</h2>
+        <button id="btnCloseCanteenMenu" class="close-btn" aria-label="Tutup">✕</button>
+      </div>
+      <p class="modal-sub">Pilih makanan atau minuman di bawah ini untuk langsung disantap oleh karaktermu!</p>
+      <div id="canteenMenuGrid" class="canteen-menu-grid"></div>
+    </div>
+  </div>
+
+  <!-- Secret Room Password Gate Modal -->
+  <div id="secretGateModal" class="modal" hidden>
+    <div class="modal-card modal-card-sm">
+      <div class="modal-head">
+        <h2>🌳 Gerbang Rahasia: Keluarga Beringin</h2>
+        <button id="btnCloseSecretGate" class="close-btn" aria-label="Tutup">✕</button>
+      </div>
+      <p class="modal-sub">
+        Hanya anggota yang mengetahui kata sandi rahasia yang dapat masuk ke <strong>Museum Keluarga Beringin</strong>.
+      </p>
+      <form id="secretPasswordForm" class="login-form">
+        <div class="field-group">
+          <label for="secretPasswordInput">Kata Sandi Masuk</label>
+          <input
+            id="secretPasswordInput"
+            type="password"
+            maxlength="24"
+            placeholder="Masukkan kata sandi..."
+            autocomplete="off"
+          />
+        </div>
+        <p id="secretPasswordError" class="login-error" role="alert" hidden></p>
+        <button type="submit" class="btn-primary btn-sm">🔓 Masuk ke Keluarga Beringin</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Museum Exhibit Modal -->
+  <div id="exhibitModal" class="modal" hidden>
+    <div class="modal-card modal-card-sm">
+      <div class="modal-head">
+        <h2 id="exhibitTitle">🗿 Koleksi Museum</h2>
+        <button id="btnCloseExhibit" class="close-btn" aria-label="Tutup">✕</button>
+      </div>
+      <p id="exhibitDesc" class="modal-sub"></p>
+      <div id="exhibitRitualBox" class="word-clue-box" hidden></div>
+      <button id="btnExhibitInteract" type="button" class="btn-primary btn-sm">✨ Amati &amp; Berinteraksi</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/campus-data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/network.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
