@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Politala Social World — Kampus Virtual Politeknik Negeri Tanah Laut</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Fullscreen Isometric Campus Canvas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- LOGIN / COMMUNITY GATE OVERLAY -->
+  <div id="loginOverlay" class="overlay">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="campus-badge">POLITALA VIRTUAL CAMPUS • 2.5D</div>
+        <h1>Politala Social World</h1>
+        <p class="subtitle">
+          Jelajahi peta kampus <strong>Politeknik Negeri Tanah Laut</strong>, nongkrong di kantin,
+          kunjungi gedung jurusan, dan bersosialisasi secara virtual.
+        </p>
+      </div>
+
+      <form id="loginForm" class="login-form" novalidate>
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="playerName">Nama Panggilan / Username</label>
+            <input
+              id="playerName"
+              type="text"
+              maxlength="18"
+              placeholder="Contoh: Rizky_TI"
+              required
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="playerProdi">Jurusan / Program Studi</label>
+            <select id="playerProdi">
+              <option value="D3 Teknologi Informasi">D3 Teknologi Informasi</option>
+              <option value="D4 TRK Jaringan">D4 Tek. Rekayasa Komputer Jaringan</option>
+              <option value="D3 Akuntansi">D3 Akuntansi</option>
+              <option value="D4 Akuntansi Perpajakan">D4 Akuntansi Perpajakan</option>
+              <option value="D3 Agroindustri">D3 Agroindustri</option>
+              <option value="D4 Teknologi Pakan Ternak">D4 Teknologi Pakan Ternak</option>
+              <option value="D4 Peng. Produk Agroindustri">D4 Pengembangan Produk Agroindustri</option>
+              <option value="D3 Teknologi Otomotif">D3 Teknologi Otomotif</option>
+              <option value="D3 Teknologi Sipil">D3 Teknologi Sipil</option>
+              <option value="D4 TRK Jalan & Jembatan">D4 Tek. Rekayasa Konstruksi Jalan & Jembatan</option>
+              <option value="D4 Pemeliharaan Alat Berat">D4 Tek. Rekayasa Pemeliharaan Alat Berat</option>
+              <option value="Tamu / Alumni">Tamu / Alumni Politala</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Avatar Customization -->
+        <div class="avatar-picker">
+          <div class="picker-row">
+            <span>Warna Jaket Almamater / Outfit:</span>
+            <div id="outfitSwatches" class="swatches"></div>
+          </div>
+          <div class="picker-row">
+            <span>Gaya Karakter:</span>
+            <div id="styleButtons" class="style-pills"></div>
+          </div>
+        </div>
+
+        <!-- Instagram Community Requirement Box -->
+        <div class="ig-gate-box">
+          <div class="ig-gate-top">
+            <div class="ig-icon" aria-hidden="true">IG</div>
+            <div class="ig-info">
+              <strong>Syarat Masuk Komunitas: Follow Instagram</strong>
+              <span>Dukung akun komunitas <code>@tambahkan_ketenangann</code> sebelum masuk area kampus.</span>
+            </div>
+            <a
+              id="igFollowBtn"
+              class="btn-ig"
+              href="https://www.instagram.com/tambahkan_ketenangann/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Buka IG ↗
+            </a>
+          </div>
+
+          <label class="ig-confirm-label">
+            <input type="checkbox" id="igConfirmCheck" />
+            <span>
+              Saya sudah follow / mengunjungi Instagram <strong>@tambahkan_ketenangann</strong>
+              <small>(konfirmasi mandiri — API Instagram tidak mendukung cek follow otomatis)</small>
+            </span>
+          </label>
+          <p id="loginError" class="login-error" role="alert" hidden></p>
+        </div>
+
+        <button type="submit" id="enterCampusBtn" class="btn-primary">
+          Masuk ke Kampus Politala →
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <span>Kontrol: <kbd>WASD</kbd> / <kbd>Panah</kbd> / Klik Tanah</span>
+        <span>•</span>
+        <span>Multi-Tab: Buka 2 tab untuk tes multiplayer lokal!</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- IN-GAME HUD -->
+  <div id="hud" class="hud" hidden>
+    <!-- Top Bar -->
+    <header class="hud-top">
+      <div class="location-pill">
+        <span class="dot-live"></span>
+        <div>
+          <div id="currentZoneName" class="zone-name">Gerbang Utama Politala</div>
+          <div id="currentZoneDesc" class="zone-desc">Jl. A. Yani Km. 06, Pelaihari</div>
+        </div>
+      </div>
+
+      <div class="hud-actions">
+        <div class="online-pill" title="Mahasiswa & NPC aktif di kampus">
+          <span class="online-dot"></span>
+          <span id="onlineCount">1 Online</span>
+        </div>
+
+        <button id="btnMap" class="hud-btn" title="Peta & Teleport Cepat (M)">🗺️ Peta</button>
+        <button id="btnTime" class="hud-btn" title="Ubah Waktu (Siang/Senja/Malam)">☀️ Siang</button>
+        <button id="btnSound" class="hud-btn" title="Suara Efek">🔊</button>
+        <button id="btnLogout" class="hud-btn hud-btn-ghost" title="Ganti Profil / Keluar">Keluar</button>
+      </div>
+    </header>
+
+    <!-- Nearby Landmark Card -->
+    <div id="landmarkPrompt" class="landmark-prompt" hidden>
+      <div class="landmark-badge" id="landmarkBadge">GEDUNG</div>
+      <div class="landmark-body">
+        <strong id="landmarkTitle">Gedung Teknik Informatika</strong>
+        <p id="landmarkText">Tekan E untuk melihat info fasilitas & berinteraksi.</p>
+      </div>
+      <button id="btnInspectLandmark" class="btn-small">Lihat Info [E]</button>
+    </div>
+
+    <!-- Bottom Left: Chat Box -->
+    <aside class="chat-panel">
+      <div class="chat-header">
+        <span>💬 Obrolan Kampus</span>
+        <span id="chatChannelTag" class="chat-tag">Global + Sekitar</span>
+      </div>
+      <div id="chatMessages" class="chat-messages"></div>
+      <form id="chatForm" class="chat-form">
+        <input
+          id="chatInput"
+          type="text"
+          maxlength="140"
+          placeholder="Sapa teman kampus... (Enter)"
+          autocomplete="off"
+        />
+        <button type="submit">Kirim</button>
+      </form>
+    </aside>
+
+    <!-- Bottom Center: Emotes -->
+    <div class="emote-bar" aria-label="Emote Sosial">
+      <button class="emote-btn" data-emote="👋" title="Sapa (1)">👋</button>
+      <button class="emote-btn" data-emote="☕" title="Ngopi (2)">☕</button>
+      <button class="emote-btn" data-emote="💻" title="Ngoding (3)">💻</button>
+      <button class="emote-btn" data-emote="📸" title="Foto (4)">📸</button>
+      <button class="emote-btn" data-emote="🎉" title="Semangat (5)">🎉</button>
+      <button class="emote-btn" data-emote="❤️" title="Suka (6)">❤️</button>
+    </div>
+
+    <!-- Bottom Right: Minimap + Zoom -->
+    <div class="minimap-wrap">
+      <canvas id="minimapCanvas" width="176" height="176"></canvas>
+      <div class="zoom-controls">
+        <button id="btnZoomIn" title="Perbesar">+</button>
+        <button id="btnZoomOut" title="Perkecil">−</button>
+      </div>
+    </div>
+
+    <!-- Mobile D-Pad (shown on touch/small screens) -->
+    <div id="mobileControls" class="mobile-controls" aria-hidden="true">
+      <button data-dir="up">▲</button>
+      <div class="mobile-mid">
+        <button data-dir="left">◀</button>
+        <button data-dir="down">▼</button>
+        <button data-dir="right">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fast-Travel Map Modal -->
+  <div id="mapModal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>🗺️ Peta Kampus Politeknik Negeri Tanah Laut</h2>
+        <button id="btnCloseMap" class="close-btn" aria-label="Tutup">✕</button>
+      </div>
+      <p class="modal-sub">Pilih lokasi di bawah ini untuk langsung berpindah (fast-travel) bersama avatar Anda.</p>
+      <div id="teleportGrid" class="teleport-grid"></div>
+    </div>
+  </div>
+
+  <!-- Building Info Modal -->
+  <div id="infoModal" class="modal" hidden>
+    <div class="modal-card modal-card-sm">
+      <div class="modal-head">
+        <h2 id="infoTitle">Gedung Kampus</h2>
+        <button id="btnCloseInfo" class="close-btn" aria-label="Tutup">✕</button>
+      </div>
+      <p id="infoDesc" class="modal-sub"></p>
+      <div id="infoMeta" class="info-meta"></div>
+      <div class="modal-actions">
+        <button id="btnAskNpc" class="btn-primary btn-sm">💬 Sapa Mahasiswa di Sini</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/campus-data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/network.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
